@@ -1,0 +1,307 @@
+================================================================================
+          KABANKALAN CITY 3D TRAFFIC MICROSIMULATION DSS
+          PROJECT METHODOLOGY, ARCHITECTURE & BUDGET BREAKDOWN
+================================================================================
+Project Title: 3D Web-Based Decision Support System (DSS) for Traffic 
+               Microsimulation and Conflict Analysis in Kabankalan City
+Target Users:  Civil Engineers, Municipal Transportation Planners, Thesis Panelists
+Scope Area:    Guanzon St., Bacolod-South Road, Ceres Bus Terminal, 
+               KCC Mall Frontage, & City Public Market
+Date Prepared: September 2026
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS:
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY & OBJECTIVES
+2. SYSTEM ARCHITECTURE & HOW IT WAS BUILT (KUNG PAANO GINAWA)
+   2.1 Technology Stack
+   2.2 Mathematical Node-Segment Road Network
+   2.3 Intelligent Driver Model (IDM) & Vehicle Physics
+   2.4 Pedestrian Dynamics & Social Force Model
+   2.5 Ceres Bus Terminal Operational Logistics
+   2.6 Surrogate Safety Assessment Model (SSAM) & Conflict Markers
+   2.7 Decision Support Analytics (LOS, Delay, Throughput, Emissions)
+3. PROJECT BUDGET & MILESTONE PAYMENT PLAN (₱12,000 - ₱15,000)
+   3.1 Budget Tier Breakdown
+   3.2 Flexible Milestone Schedule (Starting at ₱1,500 Downpayment)
+   3.3 Inclusions, Deliverables & Warranty/Support
+4. COMPREHENSIVE RECOMMENDATIONS (KUNG PAANO AAYUSIN ANG LAHAT)
+   4.1 Physics & Agent Stability Recommendations
+   4.2 Schedule & Realistic Operations Tuning
+   4.3 Visual & Environmental Polish (SimCity / Cities: Skylines Grade)
+   4.4 Thesis Defense & Panel Preparation Strategy
+================================================================================
+
+
+================================================================================
+1. EXECUTIVE SUMMARY & OBJECTIVES
+================================================================================
+Ang project na ito ay isang Web-Based 3D Traffic Microsimulation at Decision 
+Support System (DSS) na ginawa para suriin, ma-simulate, at ma-visualize ang 
+daloy ng trapiko sa sentro ng Kabankalan City, partikular sa intersection ng 
+Guanzon Street at Bacolod-South Road na katabi ng Ceres Bus Terminal.
+
+PANGUNAHING LAYUNIN:
+1. Magkaroon ng accurate 3D Digital Twin ng corridor alinsunod sa DPWH at 
+   AASHTO Geometric Design Standards.
+2. I-simulate ang halo-halong trapiko sa Pilipinas (Paratransit: Ceres Buses, 
+   Jeepneys, Tricycles, Private Cars, at Pedestrians).
+3. Magbigay ng siyentipikong datos para sa mga Civil Engineers at Planners 
+   gamit ang Highway Capacity Manual (HCM) Level of Service (LOS) at Surrogate 
+   Safety Assessment Model (SSAM) para sa safety conflicts (TTC at PET).
+
+
+================================================================================
+2. SYSTEM ARCHITECTURE & HOW IT WAS BUILT (KUNG PAANO GINAWA)
+================================================================================
+
+2.1 TECHNOLOGY STACK
+--------------------
+- Frontend Framework: Next.js 15 (App Router) + React 19 + TypeScript
+  -> Pinili ito para sa maximum type safety, mabilis na rendering, at modular 
+     component architecture.
+- 3D Graphics Engine: Three.js via @react-three/fiber at @react-three/drei
+  -> Hardware-accelerated WebGL rendering para makapag-render ng daan-daang 
+     moving vehicles, pedestrians, at 3D environment sa browser nang walang lag 
+     (60 FPS).
+- Custom Physics & Simulation Engine:
+  -> Mathematical engine gamit ang custom requestAnimationFrame loop na may 
+     variable delta-time (dt) at sub-stepping para maiwasan ang frame drops at 
+     physics clipping.
+- UI & Data Visualization: Tailwind CSS, Lucide React, at HTML5 Canvas overlays.
+
+
+2.2 MATHEMATICAL NODE-SEGMENT ROAD NETWORK (networkGraph.ts & CorridorLayout.tsx)
+---------------------------------------------------------------------------------
+Hindi gumamit ng simpleng 3D boxes o manual placement. Ang buong road network 
+ay ibinase sa simcity-style graph theory:
+- Nodes (Junctions & Waypoints): 
+  Bawat kritikal na lokasyon ay may exact 3D coordinate (X, Y, Z).
+  * Node 1: Guanzon St / Bacolod-South Road North
+  * Node 2: Guanzon St / Pedro Yulo Intersection
+  * Node 3: Ceres Terminal Ingress (Gate 1)
+  * Node 4: Ceres Terminal Egress (Gate 2)
+  * Node 5: KCC Mall Frontage
+  * Node 6: Public Market & Transport Hub
+  * Node 7: Bacolod-South Road Southbound Exit
+- Procedural Ribbons & Fillets:
+  * Ang kalsada ay extruded ribbons na may 0.15m raised beveled concrete curbs.
+  * DPWH-compliant lane markings: crisp dashed white lane dividers, solid 
+    yellow centerlines, at textured pedestrian crosswalks.
+  * Walang z-fighting o overlapping meshes dahil bawat junction ay may 
+    fillet/corner apron geometry.
+
+
+2.3 VEHICLE BEHAVIOR & INTELLIGENT DRIVER MODEL (IDM) (vehicles.ts)
+-------------------------------------------------------------------
+Para maging makatotohanan ang galaw ng mga sasakyan, ipinatupad ang Intelligent 
+Driver Model (IDM) na standard sa transport engineering:
+- Equation:
+  dv/dt = a * [ 1 - (v / v0)^delta - (s* / s)^2 ]
+  Kung saan:
+  * v0  = Desired free-flow speed (30 - 45 km/h)
+  * s0  = Minimum jam distance (2.0m para sa kotse, 3.5m para sa Ceres bus)
+  * T   = Safe time headway (1.2s - 1.8s)
+  * a   = Maximum acceleration (1.2 - 2.5 m/s²)
+  * b   = Comfortable deceleration (1.5 - 2.8 m/s²)
+- Anti-Clipping & Physical Collision Prevention:
+  * May 3D bounding box ang bawat sasakyan (Bus: 12.0m x 2.5m; Jeep: 6.5m x 1.8m; 
+    Tricycle: 2.2m x 1.4m).
+  * Na-resolve ang "ghost-walking" bug sa pamamagitan ng forward collision cone at 
+    hard-clamp logic kapag ang distance sa sinusundang sasakyan ay bumaba sa safe gap.
+
+
+2.4 PEDESTRIAN DYNAMICS & SOCIAL FORCE MODEL (pedestrians.ts)
+-------------------------------------------------------------
+- Curb Waiting & Gap Acceptance:
+  * Ang mga pedestrians ay HINDI basta tumatawid sa kalsada.
+  * Bago tumapak sa aspalto, kinakalkula ang Time-to-Collision (TTC) ng paparating 
+    na sasakyan. Kung TTC < 3.0 seconds, maghihintay ang pedestrian sa bangketa.
+- Aggressive Bus, Defensive Pedestrian Dynamic:
+  * Ang mga Ceres Bus ay may priority aggression factor.
+  * Kung papalapit ang malaking bus habang tumatawid ang pedestrian, ang pedestrian 
+    ay bibilisan ang paglakad o hihinto upang magbigay-daan (yielding behavior).
+
+
+2.5 CERES BUS TERMINAL REALISTIC LOGISTICS (routes.ts & vehicles.ts)
+--------------------------------------------------------------------
+Inayos ang simulation para maiwasan ang biglaang paglitaw (spawning out of nowhere) 
+o pagtagos sa bakod:
+1. Ingress (Gate 1): Papasok ang bus galing sa highway at babagal papasok sa driveway.
+2. Alighting Platform: Hihinto ang bus sa designated unloading zone para magbaba ng 
+   pasahero (dwell time: 10-25 seconds).
+3. Staging / Queuing Bay: Lilipat ang bus sa parking/staging bays at pipila nang 
+   maayos na may pisikal na distansya sa ibang bus.
+4. Egress (Gate 2): Lalabas lamang ang bus kapag may clearance sa highway at 
+   kakanan o kakaliwa nang may wide-turning radius.
+5. Scheduled Dispatching: Na-adjust ang bus spawning upang sumunod sa hourly rate 
+   (e.g., 1-3 bus arrivals/departures kada simulation cycle), na akma sa totoong 
+   iskedyul ng Ceres Liner.
+
+
+2.6 SURROGATE SAFETY ASSESSMENT MODEL (SSAM) (conflicts.ts)
+-----------------------------------------------------------
+Gumagamit ang system ng US FHWA SSAM methodology para sa visual conflict detection:
+- Time-to-Collision (TTC): Oras bago magbanggaan ang dalawang sasakyan kung 
+  mananatili ang kanilang bilis at trajectory (Critical kung TTC < 1.5s).
+- Post-Encroachment Time (PET): Oras sa pagitan ng pag-alis ng unang sasakyan sa 
+  conflict point at pagdating ng kasunod na sasakyan (Critical kung PET < 1.2s).
+- Conflict Classifications:
+  * Rear-End Conflict (Dilaw na 3D pulse)
+  * Crossing Conflict (Pulang 3D pulse)
+  * Lane-Change / Merging Conflict (Kahel na 3D pulse)
+
+
+2.7 DECISION SUPPORT SYSTEM & METRICS (metrics.ts & ComparisonCards.tsx)
+------------------------------------------------------------------------
+- Level of Service (LOS A hanggang F) base sa average delay per vehicle:
+  * LOS A: Delay <= 10s (Free flow)
+  * LOS B: Delay 10 - 20s
+  * LOS C: Delay 20 - 35s
+  * LOS D: Delay 35 - 55s
+  * LOS E: Delay 55 - 80s
+  * LOS F: Delay > 80s (Severe Congestion / Breakdown)
+- Vehicle Throughput (vehicles per hour)
+- Average Travel Speed (km/h)
+- Total Simulated Conflicts (Rear-End, Crossing, Lane-Change)
+- Scenario Comparison: Real-time side-by-side comparison ng "Existing Condition" 
+  laban sa "Proposed Mitigation" (e.g. Signalized intersection, Pedestrian 
+  Overpass, o Dedicated Bus Loading Bays).
+
+
+================================================================================
+3. PROJECT BUDGET & MILESTONE PAYMENT PLAN (₱12,000 - ₱15,000)
+================================================================================
+
+3.1 BUDGET OPTIONS SUMMARY
+--------------------------
+Maaaring i-package ang project depende sa napagkasunduang deliverables:
+
+OPTION A: STANDARD THESIS PACKAGE (₱12,000)
+- Buong 3D Simulation System (Kabankalan City corridor)
+- Vehicle Physics, IDM, Anti-clipping, Pedestrian AI
+- Ceres Terminal complete Ingress-Alighting-Staging-Egress flow
+- Conflict Detection (TTC/PET) at basic Level of Service (LOS) metrics
+- Interactive Control Panel at Scenario Switcher
+- Free bug fixes at setup guide sa inyong laptop
+
+OPTION B: COMPREHENSIVE / DEFENSE-READY PACKAGE (₱15,000) - (RECOMMENDED)
+- Lahat ng nasa Option A, PLUS:
+- High-fidelity 3D Landmarks (KCC Mall, Public Market, City Facades, High-res DPWH decals)
+- Comprehensive DSS Analytics Panel (Exportable CSV/PDF reports para sa Thesis Chapter 4)
+- Exact Real-World Volume Calibration (Custom input field para sa LGU actual peak hour counts)
+- System Architecture Diagram & Methodology Write-up (Chapter 3 documentation support)
+- Mock Defense Assistance (Q&A coaching para sa technical at civil engineering questions)
+- Extended Support hanggang sa final defense presentation
+
+
+3.2 MILESTONE PAYMENT SCHEDULE (Nagsisimula sa ₱1,500 Downpayment)
+------------------------------------------------------------------
+Upang maging magaan at patas sa magkabilang panig (client at developer), 
+hahatiin ang bayad sa limang (5) transparent milestones batay sa natapos na gawa:
+
+--------------------------------------------------------------------------------
+MILESTONE 1: PROJECT KICKOFF & BASELINE ARCHITECTURE
+- Downpayment / Starting Fee: ₱1,500
+- Deliverables:
+  * Pag-setup ng Next.js 15, Three.js WebGL canvas, at directory structure.
+  * Procedural Node-Segment Road Network ng Guanzon St. at Bacolod-South Rd.
+  * Initial vehicle spawning at 3D camera controls (Orbit, Pan, Zoom).
+- Proof of Completion: Live demo / video clip / runnable local build.
+
+--------------------------------------------------------------------------------
+MILESTONE 2: VEHICLE PHYSICS, ANTI-CLIPPING & TERMINAL LOGISTICS
+- Progress Payment: ₱3,000 (Total Paid so far: ₱4,500)
+- Deliverables:
+  * Intelligent Driver Model (IDM) car-following implementation.
+  * Bounding-box collision detection (Wala nang ghosting o vehicle overlapping).
+  * Ceres Terminal Complete Loop (Gate 1 Ingress -> Alighting -> Staging -> Gate 2 Egress).
+  * Pedestrian Gap Acceptance (TTC checking bago tumawid sa curb).
+- Proof of Completion: Live simulation walkthrough showing zero vehicle clipping.
+
+--------------------------------------------------------------------------------
+MILESTONE 3: CIVIL ENGINEERING METRICS & CONFLICT ANALYSIS (SSAM)
+- Progress Payment: ₱3,500 (Total Paid so far: ₱8,000)
+- Deliverables:
+  * Surrogate Safety Assessment Model (TTC and PET calculation).
+  * 3D Visual Conflict Markers (Rear-end, Crossing, Lane-change pulses).
+  * Level of Service (LOS A-F) calculator batay sa HCM standards.
+  * Real-time metrics dashboard: Vehicle Delay, Average Speed, Throughput.
+- Proof of Completion: Working metrics dashboard with live updates during simulation.
+
+--------------------------------------------------------------------------------
+MILESTONE 4: UI/UX DASHBOARD, REAL-WORLD PRESETS & VISUAL POLISH
+- Progress Payment: ₱2,500 (for ₱12k budget) O ₱4,000 (for ₱15k budget)
+- Deliverables:
+  * Responsive and modern control panels (Scenario toggles, playback speed, spawn rates).
+  * Comparison Cards (Side-by-side Baseline vs Proposed intervention).
+  * 3D environment aesthetics (Curbs, sidewalks, KCC & Market frontage, road markings).
+  * Hourly bus dispatch rate calibration (realistic schedule).
+- Proof of Completion: Functional comparison view and aesthetic refinements verified.
+
+--------------------------------------------------------------------------------
+MILESTONE 5: FINAL TURNOVER, THESIS DOCUMENTATION & DEFENSE SUPPORT
+- Final Balance Payment: ₱1,500 (for ₱12k budget) O ₱3,000 (for ₱15k budget)
+- Deliverables:
+  * Complete source code repository handover with clean build instructions.
+  * Technical documentation for Chapter 3 (Methodology & Architecture Diagrams).
+  * Exportable simulation data (summary tables para sa Chapter 4 Results & Discussion).
+  * Pre-defense dry run & technical defense readiness support.
+  * 1-month warranty for bug fixes or minor tweaks required by thesis panelists.
+--------------------------------------------------------------------------------
+
+
+================================================================================
+4. COMPREHENSIVE RECOMMENDATIONS (KUNG PAANO AAYUSIN ANG LAHAT)
+================================================================================
+
+Narito ang step-by-step roadmap upang maging perpekto at 100% defense-ready 
+ang inyong software:
+
+1. KONTROLADONG BUS DISPATCH RATE (Realistic Scheduling):
+   - Sa totoong buhay, hindi bawat 10 segundo dumarating ang Ceres bus.
+   - REKOMENDASYON: Maglagay ng simpleng slider o dropdown sa Control Panel:
+     "Bus Arrival Frequency: [1 bus every 30 mins / 1 hour / 2 hours]" 
+     (naka-scale sa simulation minutes). Kapag naka-set sa "Realistic", may 
+     oras kung kailan walang bus, at may peak hour kung kailan sunod-sunod ang 
+     dating. Ito ang hinahanap ng mga civil engineering panelists.
+
+2. PRE-SET SCENARIOS PARA SA DIRECT COMPARISON:
+   - Gumawa ng tatlong (3) distinct selectable scenarios sa dashboard:
+     * SCENARIO 0 (Baseline / Existing): Normal na gulo sa Guanzon St., 
+       tricycle jaywalking, buses turning wide across two lanes, LOS E/F.
+     * SCENARIO 1 (Traffic Light Intervention): Smart signalization sa Guanzon 
+       at Bacolod-South Rd intersection.
+     * SCENARIO 2 (Geometric & Terminal Improvement): Dedicated right-turn slip 
+       lane para sa Ceres terminal, pedestrian barriers sa sidewalk, at 
+       designated loading bay para sa tricycles.
+   - Kapag pinindot ng panel ang "Compare", agad nilang makikita ang pagbaba ng 
+     delay mula halimbawa 68s (LOS E) pababa ng 24s (LOS C).
+
+3. CALIBRATION GAMIT ANG ACTUAL DATA (KABANKALAN LGU / PNP TRAFFIC DATA):
+   - Maglagay ng "Volume Calibration Preset" kung saan pwede i-input ang 
+     peak-hour traffic counts (e.g. Ceres buses: 18 veh/hr; Jeepneys: 45 veh/hr; 
+     Tricycles: 120 veh/hr; Cars: 85 veh/hr).
+   - Kapag naitanong ng panel: "Saan niyo nakuha ang numbers na yan?", pwede 
+     sabihing naka-calibrate ito sa aktwal na ocular count o LGU traffic data.
+
+4. USER INTERFACE & PRESENTATION MODE PARA SA DEFENSE:
+   - Maglagay ng "Defense Presentation Mode" button na nagtatago ng 
+     kumplikadong controls at nagpapakita ng malinis na camera angles:
+     * Camera 1: Bird's Eye View (Top-Down ng buong network)
+     * Camera 2: Ceres Terminal Gate 1 & 2 Focus (Ingress/Egress)
+     * Camera 3: Guanzon St. Intersection Focus (Conflict hotspot)
+     * Camera 4: KCC Mall & Market Frontage
+   - Ito ay magbibigay ng "WOW factor" sa panelists habang nagpe-present.
+
+5. FINAL BUG AUDIT & STABILITY GUARANTEE:
+   - Panatilihin ang zero-tolerance sa vehicle overlapping at teleportation. 
+   - Siguraduhin na kahit i-leave ang simulation nang tumatakbo ng 30 minuto, 
+     hindi ito magka-crash o mag-i-stack ng sasakyan sa exit nodes.
+
+================================================================================
+KONKLUSYON:
+Handa na ang baseline at advanced architecture ng inyong sistema. Sa pamamagitan 
+ng ₱1,500 initial downpayment, masisimulan agad ang mga susunod na 
+refinements at phase integrations alinsunod sa inyong timeline at thesis schedule!
+================================================================================

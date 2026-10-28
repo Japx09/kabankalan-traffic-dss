@@ -391,13 +391,30 @@ export default function Vehicle({ data, showTrail = true }: VehicleProps) {
       Math.abs(Math.sin(data.heading)) > 0.08);
 
   const sweptWidth = data.sweptWidth || 6.5;
+  const selectedVehicleId = useSimulationStore((s) => s.selectedVehicleId);
+  const setSelectedVehicleId = useSimulationStore((s) => s.setSelectedVehicleId);
+  const isSelected = selectedVehicleId === data.id;
 
   return (
     <group
       ref={groupRef}
       position={[data.position.x, 0.05, data.position.z]}
       rotation={[0, -data.heading, 0]}
+      onClick={(e) => {
+        e.stopPropagation();
+        setSelectedVehicleId(data.id);
+      }}
     >
+      {/* ── Selection Ring when Inspected in Debug Mode ── */}
+      {isSelected && (
+        <group position={[0, 0.02, 0]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[dims.length * 0.52, dims.length * 0.52 + 0.45, 32]} />
+            <meshBasicMaterial color="#06b6d4" transparent opacity={0.85} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      )}
+
       {/* ── AASHTO Bus Dynamic Swept Path Envelope (Layer 2.1: Y = 0.012 relative to vehicle) ── */}
       {isSweptActive && (
         <group position={[0, 0.012, 0]}>

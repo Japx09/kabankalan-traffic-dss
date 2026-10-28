@@ -7,8 +7,15 @@ import {
   ScenarioId,
   CorridorConfig,
 } from '@/simulation/types';
-import { initSimulation, stepSimulation, SimulationState } from '@/simulation/engine';
+import { initSimulation, stepSimulation, SimulationState, FIXED_PHYSICS_DT } from '@/simulation/engine';
 import { CORRIDORS, SCENARIOS, applyScenarioToCorridor } from '@/simulation/corridors';
+
+export interface BaselineRecord {
+  metrics: SimulationMetrics;
+  params: SimulationParameters;
+  simTime: number;
+  capturedAt: string;
+}
 
 interface SimulationStore {
   // ─── Parameters ────────────────────────────────────────────
@@ -21,12 +28,21 @@ interface SimulationStore {
   setScenario: (scenario: ScenarioId) => void;
   setSpeedMultiplier: (value: number) => void;
   setBusHeadway: (value: number) => void;
+  setSeed: (seed: number) => void;
+  setPlatoonCycle: (value: number) => void;
+  setPlatoonReleaseDuration: (value: number) => void;
   applyTrafficPreset: (preset: 'am_peak' | 'off_peak' | 'pm_peak') => void;
 
-  // ─── Defense Presentation Mode ─────────────────────────────
+  // ─── Modes & UI State ──────────────────────────────────────
   isDefenseMode: boolean;
   toggleDefenseMode: () => void;
   setDefenseMode: (value: boolean) => void;
+
+  isDebugMode: boolean;
+  toggleDebugMode: () => void;
+  setDebugMode: (value: boolean) => void;
+  selectedVehicleId: string | null;
+  setSelectedVehicleId: (id: string | null) => void;
 
   // ─── Simulation State ──────────────────────────────────────
   simState: SimulationState;
@@ -36,11 +52,13 @@ interface SimulationStore {
   resetSimulation: () => void;
   tick: (dt: number) => void;
 
-  // ─── Baseline Tracking ─────────────────────────────────────
+  // ─── Baseline Comparison Tracking ──────────────────────────
+  baselineRecord: BaselineRecord | null;
   baselineMetrics: SimulationMetrics | null;
   captureBaseline: () => void;
+  clearBaseline: () => void;
 
-  // ─── GIS & Viewport State ─────────────────────────────────
+  // ─── GIS & Viewport Overlays ───────────────────────────────
   cameraPreset: 'isometric' | 'topdown' | 'crosswalk' | 'terminal';
   setCameraPreset: (preset: 'isometric' | 'topdown' | 'crosswalk' | 'terminal') => void;
   showConflictHeatmap: boolean;
@@ -51,6 +69,10 @@ interface SimulationStore {
   setShowCenterlines: (show: boolean) => void;
   showSweptEnvelopes: boolean;
   setShowSweptEnvelopes: (show: boolean) => void;
+  showConflictAreas: boolean;
+  setShowConflictAreas: (show: boolean) => void;
+  showStopBars: boolean;
+  setShowStopBars: (show: boolean) => void;
 
   // ─── Derived ───────────────────────────────────────────────
   corridor: CorridorConfig;
@@ -70,7 +92,12 @@ const defaultParams: SimulationParameters = {
   scenario: ScenarioId.Baseline,
   speedMultiplier: 1,
   busHeadway: 60,
+  seed: 12345,
+  platoonCycle: 90,
+  platoonReleaseDuration: 45,
 };
+
+let physicsAccumulator = 0;
 
 export const useSimulationStore = create<SimulationStore>((set, get) => {
   const initialState = initSimulation(defaultParams);
@@ -82,19 +109,35 @@ export const useSimulationStore = create<SimulationStore>((set, get) => {
     params: defaultParams,
     simState: initialState,
     isRunning: false,
+    baselineRecord: null,
     baselineMetrics: null,
     corridor,
     cameraPreset: 'isometric',
+
+    isDefenseMode: false,
+    toggleDefenseMode: () => set((s) => ({ isDefenseMode: !s.isDefenseMode })),
+    setDefenseMode: (isDefenseMode) => set({ isDefenseMode }),
+
+    isDebugMode: false,
+    toggleDebugMode: () => set((s) => ({ isDebugMode: !s.isDebugMode })),
+    setDebugMode: (isDebugMode) => set({ isDebugMode }),
+    selectedVehicleId: null,
+    setSelectedVehicleId: (selectedVehicleId) => set({ selectedVehicleId }),
+
     showConflictHeatmap: true,
     showVehicleTrails: true,
     showCenterlines: true,
     showSweptEnvelopes: true,
+    showConflictAreas: true,
+    showStopBars: true,
 
     setCameraPreset: (cameraPreset) => set({ cameraPreset }),
     setShowConflictHeatmap: (showConflictHeatmap) => set({ showConflictHeatmap }),
     setShowVehicleTrails: (showVehicleTrails) => set({ showVehicleTrails }),
     setShowCenterlines: (showCenterlines) => set({ showCenterlines }),
     setShowSweptEnvelopes: (showSweptEnvelopes) => set({ showSweptEnvelopes }),
+    setShowConflictAreas: (showConflictAreas) => set({ showConflictAreas }),
+    setShowStopBars: (showStopBars) => set({ showStopBars }),
 
     setVehicleInflow: (type, value) => {
       set((s) => ({
@@ -117,8 +160,33 @@ export const useSimulationStore = create<SimulationStore>((set, get) => {
       set((s) => ({ params: { ...s.params, jaywalkingProbability: value } }));
     },
 
+    setSpeedMultiplier: (value) => {
+      set((s) => ({ params: { ...s.params, speedMultiplier: value } }));
+    },
+
+    setBusHeadway: (value) => {
+      set((s) => ({ params: { ...s.params, busHeadway: value } }));
+    },
+
+    setSeed: (seed) => {
+      const { params } = get();
+      const newParams = { ...params, seed };
+      physicsAccumulator = 0;
+      const newState = initSimulation(newParams);
+      set({ params: newParams, simState: newState });
+    },
+
+    setPlatoonCycle: (value) => {
+      set((s) => ({ params: { ...s.params, platoonCycle: value } }));
+    },
+
+    setPlatoonReleaseDuration: (value) => {
+      set((s) => ({ params: { ...s.params, platoonReleaseDuration: value } }));
+    },
+
     setLocation: (location) => {
       const { params } = get();
+      physicsAccumulator = 0;
       const newParams = { ...params, location };
       const newState = initSimulation(newParams);
       const baseCorridor = CORRIDORS[location];
@@ -129,12 +197,13 @@ export const useSimulationStore = create<SimulationStore>((set, get) => {
         params: newParams,
         simState: newState,
         corridor,
-        baselineMetrics: null,
+        selectedVehicleId: null,
       });
     },
 
     setScenario: (scenario) => {
       const { params } = get();
+      physicsAccumulator = 0;
       const newParams = { ...params, scenario };
       const newState = initSimulation(newParams);
       const baseCorridor = CORRIDORS[params.location];
@@ -145,15 +214,8 @@ export const useSimulationStore = create<SimulationStore>((set, get) => {
         params: newParams,
         simState: newState,
         corridor,
+        selectedVehicleId: null,
       });
-    },
-
-    setSpeedMultiplier: (value) => {
-      set((s) => ({ params: { ...s.params, speedMultiplier: value } }));
-    },
-
-    setBusHeadway: (value) => {
-      set((s) => ({ params: { ...s.params, busHeadway: value } }));
     },
 
     applyTrafficPreset: (preset) => {
@@ -200,30 +262,57 @@ export const useSimulationStore = create<SimulationStore>((set, get) => {
       }
     },
 
-    isDefenseMode: false,
-    toggleDefenseMode: () => set((s) => ({ isDefenseMode: !s.isDefenseMode })),
-    setDefenseMode: (isDefenseMode) => set({ isDefenseMode }),
-
     startSimulation: () => set({ isRunning: true }),
     pauseSimulation: () => set({ isRunning: false }),
 
     resetSimulation: () => {
+      physicsAccumulator = 0;
       const { params } = get();
       const newState = initSimulation(params);
-      set({ simState: newState, isRunning: false });
+      set({ simState: newState, isRunning: false, selectedVehicleId: null });
     },
 
-    tick: (dt) => {
+    tick: (frameDelta) => {
       const { simState, params, isRunning } = get();
       if (!isRunning) return;
 
-      const newState = stepSimulation(simState, params, dt);
-      set({ simState: newState });
+      // Accumulate physics time scaled by speedMultiplier
+      physicsAccumulator += Math.min(frameDelta, 0.08) * params.speedMultiplier;
+
+      let currentState = simState;
+      let substeps = 0;
+      const MAX_SUBSTEPS = 25; // Prevents spiral of death under heavy load
+
+      while (physicsAccumulator >= FIXED_PHYSICS_DT && substeps < MAX_SUBSTEPS) {
+        currentState = stepSimulation(currentState, params, FIXED_PHYSICS_DT);
+        physicsAccumulator -= FIXED_PHYSICS_DT;
+        substeps++;
+      }
+
+      // If lagging behind heavily, clamp accumulator so time isn't lost wildly
+      if (physicsAccumulator > FIXED_PHYSICS_DT * 3) {
+        physicsAccumulator = 0;
+      }
+
+      set({ simState: currentState });
     },
 
     captureBaseline: () => {
-      const { simState } = get();
-      set({ baselineMetrics: { ...simState.metrics } });
+      const { simState, params } = get();
+      const record: BaselineRecord = {
+        metrics: { ...simState.metrics },
+        params: { ...params },
+        simTime: simState.simTime,
+        capturedAt: new Date().toLocaleTimeString(),
+      };
+      set({
+        baselineRecord: record,
+        baselineMetrics: { ...simState.metrics },
+      });
+    },
+
+    clearBaseline: () => {
+      set({ baselineRecord: null, baselineMetrics: null });
     },
   };
 });

@@ -14,7 +14,7 @@ const HALF_ROAD = TOTAL_ROADWAY_WIDTH / 2; // 4.85m
 const LAYER_2_ZEBRA = 0.06;
 
 export default function Crosswalk({ corridor }: CrosswalkProps) {
-  const signalPhase = useSimulationStore((s) => s.simState.signalPhase);
+  const signalPhase = useSimulationStore((s) => s.simState.signalState.vehicularPhase);
 
   return (
     <group>

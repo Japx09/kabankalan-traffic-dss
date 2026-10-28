@@ -23,6 +23,16 @@ export enum VehicleState {
   Adjusting = 'adjusting',
 }
 
+export enum ManeuverState {
+  Approach = 'APPROACH',
+  Yield = 'YIELD',
+  Turn = 'TURN',
+  Merge = 'MERGE',
+  Cruise = 'CRUISE',
+  Dwelling = 'DWELLING',
+  Queued = 'QUEUED',
+}
+
 export enum ConflictType {
   VehiclePedestrian = 'vehicle-pedestrian',
   RearEnd = 'rear-end',
@@ -60,12 +70,27 @@ export const VEHICLE_DIMENSIONS: Record<VehicleType, { length: number; width: nu
   [VehicleType.PrivateCar]: { length: 4.8, width: 1.8, height: 1.5 },
 };
 
+// ─── Simulation Faults ──────────────────────────────────────────────────────
+
+export interface SimulationFault {
+  id: string;
+  time: number;
+  location: { x: number; z: number };
+  entity1Id: string;
+  entity2Id: string;
+  entity1Type: VehicleType | 'pedestrian';
+  entity2Type: VehicleType | 'pedestrian';
+  overlapDistance: number;
+  severity: 'minor' | 'severe';
+}
+
 // ─── Entity Interfaces ──────────────────────────────────────────────────────
 
 export interface Vehicle {
   id: string;
   type: VehicleType;
   state: VehicleState;
+  maneuverState: ManeuverState;
   /** Position in meters along the corridor (x) and lateral offset (z) */
   position: { x: number; z: number };
   /** Speed in m/s */
@@ -84,8 +109,14 @@ export interface Vehicle {
   freeFlowTravelTime: number;
   /** Whether the vehicle is a public transport vehicle that will stop to load */
   isPublicTransport: boolean;
-  /** Accumulated delay in seconds */
+  /** Accumulated total travel delay in seconds (actual travel time - free-flow travel time) */
   accumulatedDelay: number;
+  /** Stopped delay in seconds (duration spent with speed < 0.3 m/s) */
+  stoppedDelay: number;
+  /** Control delay in seconds (delay specifically due to yielding, signals, & acceleration/deceleration) */
+  controlDelay: number;
+  /** Duration in seconds vehicle has continuously been stationary */
+  stoppedDuration: number;
   /** Whether the vehicle has already completed a dwell stop */
   hasDwelled: boolean;
   /** Whether the vehicle is currently illegally stopped/encroaching on a pedestrian crosswalk */
@@ -98,11 +129,21 @@ export interface Vehicle {
   isYielding?: boolean;
   /** Yield wait timer (seconds) */
   yieldTimer?: number;
+  /** Detailed reason explaining why vehicle is yielding */
+  yieldingReason?: string;
+  /** ID of vehicle causing yield */
+  conflictingVehicleId?: string;
+  /** ID of leader vehicle being followed */
+  leaderVehicleId?: string;
+  /** Active conflict area being negotiated */
+  targetConflictAreaId?: string;
+  /** Predicted gap in seconds to conflicting vehicle */
+  predictedGap?: number;
   /** Whether this is a parked standby vehicle in staging bay */
   isParkedStandby?: boolean;
   /** True if the vehicle is currently involved in an acute conflict (TTC < 1.5s) */
   isInConflict?: boolean;
-  /** Dynamic lateral swept envelope width during wide turns (e.g. 6.5m for turning 11m bus) */
+  /** Dynamic lateral swept envelope width during wide turns (e.g. 6.5m for turning 12m bus) */
   sweptWidth?: number;
   /** Flag indicating wide-turning long vehicle */
   isWideTurningBus?: boolean;
@@ -110,12 +151,24 @@ export interface Vehicle {
   terminalPhase?: 'inbound' | 'alighting' | 'queued' | 'egress';
   /** Dispatch countdown timer for queued buses waiting in staging yard */
   dispatchTimer?: number;
-  /** Timer tracking how long the vehicle has been stuck (velocity near 0 while moving) */
+  /** Absolute scheduled departure time in simulation seconds */
+  scheduledDepartureTime?: number;
+  /** Timer tracking how long the vehicle has been stuck */
   stuckTimer?: number;
   /** Distance to traverse in reverse during anti-gridlock maneuver */
   reverseDistanceTarget?: number;
   /** Distance successfully reversed so far */
   reverseDistanceTraveled?: number;
+  /** Requested IDM acceleration from decision phase (m/s²) */
+  requestedAcc?: number;
+  /** Applied kinematic acceleration after bounds/yielding (m/s²) */
+  appliedAcc?: number;
+  /** Route distance traveled in last physics step (meters) */
+  deltaDistance?: number;
+  /** IDs of nearby vehicles detected during cross-route surveillance */
+  detectedNearbyVehicleIds?: string[];
+  /** Distance to active stop bar or holding line (meters) */
+  targetStopDistance?: number;
 }
 
 export interface Pedestrian {
@@ -156,24 +209,39 @@ export interface ConflictEvent {
   time: number;
   /** Age of the marker in seconds (for fade-out) */
   age: number;
+  /** Involved entity IDs */
+  entity1Id?: string;
+  entity2Id?: string;
 }
 
 // ─── Metrics ────────────────────────────────────────────────────────────────
 
 export interface SimulationMetrics {
-  /** Average delay per vehicle (seconds/vehicle) */
+  /** Average travel delay per vehicle (seconds/vehicle) */
   averageDelay: number;
+  /** Stopped delay per vehicle (seconds/vehicle: v < 0.3 m/s) */
+  stoppedDelay: number;
+  /** Control delay per vehicle (seconds/vehicle: control + deceleration/acceleration) */
+  controlDelay: number;
   /** Average queue length (meters) */
   averageQueueLength: number;
-  /** 95th percentile queue length (meters) */
+  /** Average queue length (vehicles) */
+  averageQueueVehicles: number;
+  /** Empirical 95th percentile queue length (meters) computed from periodic observations */
   q95QueueLength: number;
-  /** Level of Service */
+  /** Empirical 95th percentile queue length (vehicles) */
+  q95QueueVehicles: number;
+  /** Total number of periodic 1.0s queue observations collected */
+  queueSampleCount: number;
+  /** Level of Service based on HCM control delay */
   los: LevelOfService;
-  /** Total conflicts by type */
+  /** Total deduplicated conflicts by type */
   conflictCounts: Record<ConflictType, number>;
   /** Critical conflicts per hour (TTC <= 1.5s or PET <= 1.0s) */
   criticalConflictsPerHour: number;
-  /** Total vehicles processed */
+  /** Total simulation faults (physical overlaps recorded) */
+  simulationFaults: number;
+  /** Total vehicles processed through corridor */
   vehiclesProcessed: number;
   /** Total pedestrians processed */
   pedestriansProcessed: number;
@@ -181,6 +249,10 @@ export interface SimulationMetrics {
   activeVehicles: number;
   /** Current pedestrian count */
   activePedestrians: number;
+  /** Pending vehicles waiting for safe insertion at entry gates */
+  pendingQueuedVehicles: number;
+  /** Unmet demand (arrivals unable to insert due to spillback) */
+  unmetDemand: number;
   /** Total pedestrian crosswalk obstruction / blocking violations */
   crosswalkViolations: number;
 }
@@ -204,9 +276,16 @@ export interface SimulationParameters {
   speedMultiplier: number;
   /** Bus scheduled headway dispatch interval in seconds (default 60s) */
   busHeadway: number;
+  /** Seed for deterministic pseudo-random number generator */
+  seed: number;
+  /** Upstream platooning wave cycle length in seconds (default 90s) */
+  platoonCycle: number;
+  /** Upstream platooning release duration in seconds (default 45s) */
+  platoonReleaseDuration: number;
 }
 
 export type TrafficSignalPhase = 'green' | 'yellow' | 'red';
+export type TrafficSignalInterval = 'veh_green' | 'veh_yellow' | 'all_red_ped_walk' | 'ped_clearance';
 
 // ─── Corridor Configuration ─────────────────────────────────────────────────
 

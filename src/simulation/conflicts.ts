@@ -10,31 +10,78 @@ import {
 let conflictIdCounter = 0;
 
 function nextConflictId(): string {
-  return `c-${++conflictIdCounter}-${Math.random().toString(36).slice(2, 7)}`;
+  return `c-${++conflictIdCounter}`;
 }
 
 export function resetConflictIds(): void {
   conflictIdCounter = 0;
 }
 
-// ─── TTC / PET Critical Safety Thresholds (FHWA SSAM Standards) ─────────────
-
+// ─── SSAM-Inspired Critical Safety Thresholds (FHWA Guidelines) ─────────────
 export const TTC_CRITICAL = 1.5; // seconds
 export const PET_CRITICAL = 1.0; // seconds
 
-// ─── Conflict Point Tracking for PET ────────────────────────────────────────
-
-interface ConflictPointOccupancy {
+// ─── Conflict Point Spatial Occupancy History for PET ───────────────────────
+export interface OccupancyRecord {
   position: { x: number; z: number };
-  time: number;
+  exitTime: number;
   entityId: string;
 }
 
-const recentOccupancies: ConflictPointOccupancy[] = [];
-const MAX_OCCUPANCY_HISTORY = 250;
+const MAX_OCCUPANCY_RECORDS = 250;
+const occupancyHistory: OccupancyRecord[] = [];
+
+export function recordOccupancyExit(entityId: string, position: { x: number; z: number }, time: number): void {
+  occupancyHistory.push({ position: { ...position }, exitTime: time, entityId });
+  if (occupancyHistory.length > MAX_OCCUPANCY_RECORDS) {
+    occupancyHistory.shift();
+  }
+}
+
+export function computeObservedPET(
+  enteringEntityId: string,
+  position: { x: number; z: number },
+  entryTime: number
+): number {
+  let minPET = Infinity;
+
+  for (const occ of occupancyHistory) {
+    if (occ.entityId === enteringEntityId) continue;
+    const dist = Math.hypot(occ.position.x - position.x, occ.position.z - position.z);
+    if (dist < 3.0) {
+      const pet = Math.abs(entryTime - occ.exitTime);
+      if (pet < minPET) {
+        minPET = pet;
+      }
+    }
+  }
+
+  return minPET === Infinity ? NaN : minPET;
+}
+
+// ─── Active Encounter State for Deduplication ───────────────────────────────
+export interface ActiveEncounter {
+  key: string;
+  type: ConflictType;
+  entity1Id: string;
+  entity2Id: string;
+  minTTC: number;
+  minPET: number;
+  position: { x: number; z: number };
+  startTime: number;
+  lastSeenTime: number;
+}
+
+const activeEncounters = new Map<string, ActiveEncounter>();
+
+export function resetConflictEngine(): void {
+  activeEncounters.clear();
+  occupancyHistory.length = 0;
+  conflictIdCounter = 0;
+}
 
 /**
- * 2D analytical closest approach and Time-to-Collision between vehicle and pedestrian.
+ * 2D Analytical Trajectory & Footprint TTC for Vehicle-Pedestrian Encounters.
  */
 function computeVehiclePedestrianTTC(
   vehicle: Vehicle,
@@ -47,35 +94,27 @@ function computeVehiclePedestrianTTC(
   const vDims = VEHICLE_DIMENSIONS[vehicle.type];
   const effectiveWidth = (vehicle.sweptWidth || vDims.width) / 2 + 0.6;
 
-  // Relative vector from vehicle to pedestrian
   const dx = pedestrian.position.x - vehicle.position.x;
   const dz = pedestrian.position.z - vehicle.position.z;
 
-  // Vehicle forward direction
   const fwdX = Math.cos(vehicle.heading);
   const fwdZ = Math.sin(vehicle.heading);
 
-  // Longitudinal distance along vehicle heading
   const longDist = dx * fwdX + dz * fwdZ;
-  // Lateral distance perpendicular to vehicle heading
   const latDist = -fwdZ * dx + fwdX * dz;
 
-  if (longDist > 0.5 && longDist < 28) {
+  if (longDist > 0.4 && longDist < 30) {
     const timeToReach = longDist / vehicle.speed;
 
-    // Pedestrian motion vector
-    const pedVelX = 0;
     const pedVelZ = pedestrian.speed * (pedestrian.crossingDirection || 1);
-
-    // If pedestrian is crossing or waiting near road
-    const futureLatDist = latDist + (-fwdZ * pedVelX + fwdX * pedVelZ) * timeToReach;
+    const futureLatDist = latDist + (fwdX * pedVelZ) * timeToReach;
 
     if (Math.abs(futureLatDist) < effectiveWidth) {
       return {
         ttc: Math.max(0.1, timeToReach),
         pos: {
-          x: vehicle.position.x + fwdX * (longDist * 0.8),
-          z: vehicle.position.z + fwdZ * (longDist * 0.8),
+          x: vehicle.position.x + fwdX * (longDist * 0.75),
+          z: vehicle.position.z + fwdZ * (longDist * 0.75),
         },
       };
     }
@@ -85,22 +124,20 @@ function computeVehiclePedestrianTTC(
 }
 
 /**
- * 2D Vehicle-Vehicle Crossing TTC (e.g. wide bus egress across oncoming traffic,
- * or left turns into Pedro Zayco Sr. St / Aquiles-Zayco Ave).
+ * 2D Analytical Trajectory & Footprint TTC for Crossing & Merging Vehicles.
  */
-function compute2DCrossingTTC(
+function computeCrossingTTC(
   v1: Vehicle,
   v2: Vehicle
 ): { ttc: number; pos: { x: number; z: number } } {
   if (v1.isParkedStandby || v2.isParkedStandby) return { ttc: Infinity, pos: v1.position };
-  if (v1.speed < 0.4 && v2.speed < 0.4) return { ttc: Infinity, pos: v1.position };
+  if (v1.speed < 0.3 && v2.speed < 0.3) return { ttc: Infinity, pos: v1.position };
 
   const dx = v2.position.x - v1.position.x;
   const dz = v2.position.z - v1.position.z;
   const dist = Math.hypot(dx, dz);
-  if (dist > 35) return { ttc: Infinity, pos: v1.position };
+  if (dist > 40) return { ttc: Infinity, pos: v1.position };
 
-  // Velocities in 2D
   const v1x = v1.speed * Math.cos(v1.heading);
   const v1z = v1.speed * Math.sin(v1.heading);
   const v2x = v2.speed * Math.cos(v2.heading);
@@ -109,13 +146,12 @@ function compute2DCrossingTTC(
   const dvx = v2x - v1x;
   const dvz = v2z - v1z;
   const dvSq = dvx * dvx + dvz * dvz;
-  if (dvSq < 0.25) return { ttc: Infinity, pos: v1.position };
+  if (dvSq < 0.2) return { ttc: Infinity, pos: v1.position };
 
-  // Analytical time of minimum distance t = - (dP . dV) / |dV|^2
   const dot = dx * dvx + dz * dvz;
   const tMin = -dot / dvSq;
 
-  if (tMin > 0.05 && tMin <= 3.8) {
+  if (tMin > 0.05 && tMin <= 4.0) {
     const minDx = dx + dvx * tMin;
     const minDz = dz + dvz * tMin;
     const minD = Math.hypot(minDx, minDz);
@@ -134,15 +170,14 @@ function compute2DCrossingTTC(
 }
 
 /**
- * 2D Rear-End TTC between follower and leader along the same trajectory.
+ * 2D Longitudinal Rear-End TTC between follower and leader.
  */
 function computeRearEndTTC(follower: Vehicle, leader: Vehicle): number {
   if (follower.isParkedStandby || leader.isParkedStandby) return Infinity;
 
-  // Heading alignment check (moving roughly same direction within 30 deg)
   let headingDiff = Math.abs(follower.heading - leader.heading);
   while (headingDiff > Math.PI) headingDiff -= Math.PI;
-  if (headingDiff > 0.55) return Infinity;
+  if (headingDiff > 0.5) return Infinity; // Not parallel
 
   const dx = leader.position.x - follower.position.x;
   const dz = leader.position.z - follower.position.z;
@@ -152,12 +187,12 @@ function computeRearEndTTC(follower: Vehicle, leader: Vehicle): number {
   const longDist = dx * fwdX + dz * fwdZ;
   const latDist = Math.abs(-fwdZ * dx + fwdX * dz);
 
-  if (latDist > 2.2) return Infinity; // Not in same lateral path
+  if (latDist > 2.2) return Infinity;
 
   const leaderLength = VEHICLE_DIMENSIONS[leader.type].length;
   const gap = longDist - leaderLength;
 
-  if (gap > 0 && gap < 28) {
+  if (gap > 0 && gap < 30) {
     const closingSpeed = follower.speed - leader.speed;
     if (closingSpeed > 0.4) {
       return gap / closingSpeed;
@@ -168,76 +203,59 @@ function computeRearEndTTC(follower: Vehicle, leader: Vehicle): number {
 }
 
 /**
- * Compute Post-Encroachment Time (PET) at a conflict point.
+ * Deduplicated Conflict Event Processor.
+ * Tracks ongoing encounters until entities separate, outputting EXACTLY ONE conflict event per encounter.
  */
-function computePET(
-  entityId: string,
-  position: { x: number; z: number },
-  currentTime: number
-): number {
-  let minPET = Infinity;
-
-  for (const occ of recentOccupancies) {
-    if (occ.entityId === entityId) continue;
-    const dist = Math.hypot(occ.position.x - position.x, occ.position.z - position.z);
-    if (dist < 2.5) {
-      const pet = Math.abs(currentTime - occ.time);
-      if (pet < minPET) {
-        minPET = pet;
-      }
-    }
-  }
-
-  recentOccupancies.push({ position: { ...position }, time: currentTime, entityId });
-  if (recentOccupancies.length > MAX_OCCUPANCY_HISTORY) {
-    recentOccupancies.shift();
-  }
-
-  return minPET;
-}
-
-/**
- * Detect all conflicts (Vehicle-Pedestrian, Crossing, Rear-End, Weaving) in current state.
- */
-export function detectConflicts(
+export function detectDeduplicatedConflicts(
   vehicles: Vehicle[],
   pedestrians: Pedestrian[],
-  simTime: number,
-  existingConflicts: ConflictEvent[]
+  simTime: number
 ): ConflictEvent[] {
-  const newConflicts: ConflictEvent[] = [];
+  const completedEvents: ConflictEvent[] = [];
+  const activeKeysThisFrame = new Set<string>();
 
-  const isNearRecentConflict = (x: number, z: number) =>
-    existingConflicts.some(
-      (c) => Math.hypot(c.position.x - x, c.position.z - z) < 3.2 && c.age < 2.0
-    );
-
-  // 1. Vehicle-Pedestrian Conflicts
+  // 1. Vehicle-Pedestrian Encounters
   for (const vehicle of vehicles) {
     if (vehicle.isParkedStandby) continue;
 
     for (const ped of pedestrians) {
       const { ttc, pos } = computeVehiclePedestrianTTC(vehicle, ped);
       if (ttc <= TTC_CRITICAL) {
-        if (!isNearRecentConflict(pos.x, pos.z)) {
-          const pet = computePET(ped.id, pos, simTime);
-          newConflicts.push({
-            id: nextConflictId(),
+        const key = `ped:${vehicle.id}:${ped.id}`;
+        activeKeysThisFrame.add(key);
+
+        const observedPet = computeObservedPET(ped.id, pos, simTime);
+        const existing = activeEncounters.get(key);
+
+        if (existing) {
+          if (ttc < existing.minTTC) {
+            existing.minTTC = ttc;
+            existing.position = pos;
+          }
+          if (!isNaN(observedPet) && (isNaN(existing.minPET) || observedPet < existing.minPET)) {
+            existing.minPET = observedPet;
+          }
+          existing.lastSeenTime = simTime;
+        } else {
+          activeEncounters.set(key, {
+            key,
             type: ConflictType.VehiclePedestrian,
+            entity1Id: vehicle.id,
+            entity2Id: ped.id,
+            minTTC: ttc,
+            minPET: observedPet,
             position: pos,
-            ttc,
-            pet: pet === Infinity ? NaN : pet,
-            time: simTime,
-            age: 0,
+            startTime: simTime,
+            lastSeenTime: simTime,
           });
-          ped.state = PedestrianState.InConflict;
-          vehicle.isInConflict = true;
         }
+        vehicle.isInConflict = true;
+        ped.state = PedestrianState.InConflict;
       }
     }
   }
 
-  // 2. Vehicle-Vehicle Conflicts (Crossing, Rear-End, Weaving)
+  // 2. Vehicle-Vehicle Encounters
   for (let i = 0; i < vehicles.length; i++) {
     const v1 = vehicles[i];
     if (v1.isParkedStandby) continue;
@@ -246,74 +264,99 @@ export function detectConflicts(
       const v2 = vehicles[j];
       if (v2.isParkedStandby) continue;
 
-      // Check crossing/weaving conflict
-      const cross = compute2DCrossingTTC(v1, v2);
+      const cross = computeCrossingTTC(v1, v2);
+      let detectedType: ConflictType | null = null;
+      let detectedTTC = Infinity;
+      let detectedPos = cross.pos;
+
       if (cross.ttc <= TTC_CRITICAL) {
-        if (!isNearRecentConflict(cross.pos.x, cross.pos.z)) {
-          const pet = computePET(v2.id, cross.pos, simTime);
-          
-          // FHWA SSAM Angle-based classification
-          let angleDiff = Math.abs(v1.heading - v2.heading);
-          while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - 2 * Math.PI);
-          const acuteAngleDeg = (Math.min(angleDiff, Math.PI - angleDiff) * 180) / Math.PI;
-          const assignedType = acuteAngleDeg > 65 || angleDiff > 1.48 ? ConflictType.Crossing : ConflictType.Weaving;
-
-          newConflicts.push({
-            id: nextConflictId(),
-            type: assignedType,
-            position: cross.pos,
-            ttc: cross.ttc,
-            pet: pet === Infinity ? NaN : pet,
-            time: simTime,
-            age: 0,
-          });
-          v1.isInConflict = true;
-          v2.isInConflict = true;
-          continue;
+        let angleDiff = Math.abs(v1.heading - v2.heading);
+        while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - 2 * Math.PI);
+        const acuteAngleDeg = (Math.min(angleDiff, Math.PI - angleDiff) * 180) / Math.PI;
+        detectedType = acuteAngleDeg > 60 ? ConflictType.Crossing : ConflictType.Weaving;
+        detectedTTC = cross.ttc;
+      } else {
+        let rearTTC = computeRearEndTTC(v1, v2);
+        let follower = v1;
+        let leader = v2;
+        if (rearTTC === Infinity) {
+          rearTTC = computeRearEndTTC(v2, v1);
+          follower = v2;
+          leader = v1;
+        }
+        if (rearTTC <= TTC_CRITICAL) {
+          detectedType = ConflictType.RearEnd;
+          detectedTTC = rearTTC;
+          detectedPos = {
+            x: (follower.position.x + leader.position.x) / 2,
+            z: (follower.position.z + leader.position.z) / 2,
+          };
         }
       }
 
-      // Check rear-end conflict (v1 following v2 or v2 following v1)
-      let rearTTC = computeRearEndTTC(v1, v2);
-      let follower = v1;
-      let leader = v2;
-      if (rearTTC === Infinity) {
-        rearTTC = computeRearEndTTC(v2, v1);
-        follower = v2;
-        leader = v1;
-      }
+      if (detectedType !== null && detectedTTC <= TTC_CRITICAL) {
+        const key = `veh:${v1.id < v2.id ? `${v1.id}:${v2.id}` : `${v2.id}:${v1.id}`}`;
+        activeKeysThisFrame.add(key);
 
-      if (rearTTC <= TTC_CRITICAL) {
-        const conflictPos = {
-          x: (follower.position.x + leader.position.x) / 2,
-          z: (follower.position.z + leader.position.z) / 2,
-        };
-        if (!isNearRecentConflict(conflictPos.x, conflictPos.z)) {
-          const pet = computePET(follower.id, conflictPos, simTime);
-          newConflicts.push({
-            id: nextConflictId(),
-            type: ConflictType.RearEnd,
-            position: conflictPos,
-            ttc: rearTTC,
-            pet: pet === Infinity ? NaN : pet,
-            time: simTime,
-            age: 0,
+        const observedPet = computeObservedPET(v2.id, detectedPos, simTime);
+        const existing = activeEncounters.get(key);
+
+        if (existing) {
+          if (detectedTTC < existing.minTTC) {
+            existing.minTTC = detectedTTC;
+            existing.position = detectedPos;
+          }
+          if (!isNaN(observedPet) && (isNaN(existing.minPET) || observedPet < existing.minPET)) {
+            existing.minPET = observedPet;
+          }
+          existing.lastSeenTime = simTime;
+        } else {
+          activeEncounters.set(key, {
+            key,
+            type: detectedType,
+            entity1Id: v1.id,
+            entity2Id: v2.id,
+            minTTC: detectedTTC,
+            minPET: observedPet,
+            position: detectedPos,
+            startTime: simTime,
+            lastSeenTime: simTime,
           });
-          v1.isInConflict = true;
-          v2.isInConflict = true;
         }
+        v1.isInConflict = true;
+        v2.isInConflict = true;
       }
     }
   }
 
-  return newConflicts;
+  // 3. Close finished encounters (entities separated for > 1.2s) and emit exactly ONE ConflictEvent
+  for (const [key, enc] of activeEncounters.entries()) {
+    if (!activeKeysThisFrame.has(key)) {
+      if (simTime - enc.lastSeenTime > 1.2) {
+        completedEvents.push({
+          id: nextConflictId(),
+          type: enc.type,
+          position: enc.position,
+          ttc: enc.minTTC,
+          pet: isNaN(enc.minPET) ? NaN : enc.minPET,
+          time: enc.startTime,
+          age: 0,
+          entity1Id: enc.entity1Id,
+          entity2Id: enc.entity2Id,
+        });
+        activeEncounters.delete(key);
+      }
+    }
+  }
+
+  return completedEvents;
 }
 
 /**
- * Age existing conflict markers and remove old ones.
+ * Age existing active conflict markers in 3D viewport.
  */
 export function ageConflicts(conflicts: ConflictEvent[], dt: number): ConflictEvent[] {
   return conflicts
     .map((c) => ({ ...c, age: c.age + dt }))
-    .filter((c) => c.age < 7); // Keep markers for 7 seconds
+    .filter((c) => c.age < 7.0); // Persist markers for 7.0 seconds in viewport
 }

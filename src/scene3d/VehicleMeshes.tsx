@@ -33,12 +33,12 @@ interface VehicleRig {
 interface SharedMaterials {
   tire: THREE.MeshStandardMaterial;
   rim: THREE.MeshStandardMaterial;
-  glass: THREE.MeshStandardMaterial;
+  glass: THREE.MeshPhysicalMaterial;
   headlight: THREE.MeshStandardMaterial;
-  chrome: THREE.MeshStandardMaterial;
+  chrome: THREE.MeshPhysicalMaterial;
   darkTrim: THREE.MeshStandardMaterial;
-  ceresYellow: THREE.MeshStandardMaterial;
-  ceresWhite: THREE.MeshStandardMaterial;
+  ceresYellow: THREE.MeshPhysicalMaterial;
+  ceresWhite: THREE.MeshPhysicalMaterial;
   ceresStripe: THREE.MeshStandardMaterial;
   riderSkin: THREE.MeshStandardMaterial;
   riderShirt: THREE.MeshStandardMaterial;
@@ -46,12 +46,15 @@ interface SharedMaterials {
 
 function createSharedVehicleMaterials(): SharedMaterials {
   return {
-    tire: new THREE.MeshStandardMaterial({ color: '#181c22', roughness: 0.92 }),
-    rim: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.35, metalness: 0.7 }),
-    glass: new THREE.MeshStandardMaterial({
-      color: '#172536',
-      roughness: 0.14,
-      metalness: 0.6,
+    tire: new THREE.MeshStandardMaterial({ color: '#14171c', roughness: 0.88, metalness: 0.05 }),
+    rim: new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.25, metalness: 0.85 }),
+    glass: new THREE.MeshPhysicalMaterial({
+      color: '#101d2c',
+      roughness: 0.06,
+      metalness: 0.18,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
+      envMapIntensity: 1.65,
     }),
     headlight: new THREE.MeshStandardMaterial({
       color: '#fffbeb',
@@ -59,11 +62,31 @@ function createSharedVehicleMaterials(): SharedMaterials {
       emissiveIntensity: 1.4,
       roughness: 0.2,
     }),
-    chrome: new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.2, metalness: 0.85 }),
-    darkTrim: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.75 }),
-    ceresYellow: new THREE.MeshStandardMaterial({ color: '#f5b800', roughness: 0.42, metalness: 0.08 }),
-    ceresWhite: new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.45, metalness: 0.05 }),
-    ceresStripe: new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.48 }),
+    chrome: new THREE.MeshPhysicalMaterial({
+      color: '#e2e8f0',
+      roughness: 0.16,
+      metalness: 0.9,
+      clearcoat: 0.5,
+      envMapIntensity: 1.4,
+    }),
+    darkTrim: new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.72 }),
+    ceresYellow: new THREE.MeshPhysicalMaterial({
+      color: '#f5b800',
+      roughness: 0.3,
+      metalness: 0.16,
+      clearcoat: 0.78,
+      clearcoatRoughness: 0.16,
+      envMapIntensity: 1.2,
+    }),
+    ceresWhite: new THREE.MeshPhysicalMaterial({
+      color: '#f8fafc',
+      roughness: 0.34,
+      metalness: 0.08,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.18,
+      envMapIntensity: 1.15,
+    }),
+    ceresStripe: new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.42 }),
     riderSkin: new THREE.MeshStandardMaterial({ color: '#d4a373', roughness: 0.8 }),
     riderShirt: new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.85 }),
   };
@@ -247,7 +270,14 @@ function JeepneyBody({
       {/* Lower colorful painted jeepney passenger body */}
       <mesh position={[0, 0.92, -0.78]} castShadow receiveShadow>
         <boxGeometry args={[W - 0.04, 0.96, L - 1.9]} />
-        <meshStandardMaterial color={liveryColor} roughness={0.42} metalness={0.18} />
+        <meshPhysicalMaterial
+          color={liveryColor}
+          roughness={0.3}
+          metalness={0.22}
+          clearcoat={0.75}
+          clearcoatRoughness={0.18}
+          envMapIntensity={1.2}
+        />
       </mesh>
       {/* Stainless upper beltline stripe */}
       <mesh position={[0, 1.38, -0.78]} material={shared.chrome}>
@@ -366,7 +396,13 @@ function TricycleBody({
       {/* Passenger Sidecar Cab (-X curb side!) */}
       <mesh position={[-0.26, 0.66, -0.04]} castShadow receiveShadow>
         <boxGeometry args={[0.78, 0.72, 1.62]} />
-        <meshStandardMaterial color={canopyColor} roughness={0.45} metalness={0.12} />
+        <meshPhysicalMaterial
+          color={canopyColor}
+          roughness={0.34}
+          metalness={0.16}
+          clearcoat={0.6}
+          clearcoatRoughness={0.22}
+        />
       </mesh>
       {/* Sidecar front windshield */}
       <mesh position={[-0.26, 1.26, 0.68]} rotation={[-0.18, 0, 0]} material={shared.glass}>
@@ -432,12 +468,26 @@ function PrivateCarBody({
       {/* Lower sculpted chassis */}
       <mesh position={[0, 0.62, 0]} castShadow receiveShadow>
         <boxGeometry args={[W - 0.04, 0.66, L - 0.14]} />
-        <meshStandardMaterial color={paintColor} roughness={0.32} metalness={0.28} />
+        <meshPhysicalMaterial
+          color={paintColor}
+          roughness={0.26}
+          metalness={0.32}
+          clearcoat={0.85}
+          clearcoatRoughness={0.14}
+          envMapIntensity={1.3}
+        />
       </mesh>
       {/* Upper greenhouse cabin */}
       <mesh position={[0, 1.18, -0.22]} castShadow receiveShadow>
         <boxGeometry args={[W - 0.28, 0.56, L * 0.52]} />
-        <meshStandardMaterial color={paintColor} roughness={0.32} metalness={0.28} />
+        <meshPhysicalMaterial
+          color={paintColor}
+          roughness={0.26}
+          metalness={0.32}
+          clearcoat={0.85}
+          clearcoatRoughness={0.14}
+          envMapIntensity={1.3}
+        />
       </mesh>
       {/* Front & rear dark tinted windshields */}
       <mesh position={[0, 1.16, 0.96]} rotation={[-0.45, 0, 0]} material={shared.glass}>

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
+import { Environment, Lightformer } from '@react-three/drei';
 import type {
   BuildingFootprint,
   Crosswalk,
@@ -22,12 +23,20 @@ import {
   buildRibbonGeometry,
   buildSolidLineGeometry,
   buildStagingBaysGeometry,
-  createAsphaltTexture,
   createGateSignTexture,
-  createTerrainTexture,
   mergeSafeGeometries,
   subtractIntervals,
 } from './roadGeometry';
+import {
+  createAsphaltPBR,
+  createConcretePBR,
+  createCorrugatedRoofPBR,
+  createFacadePBR,
+  createNaturalTerrainPBR,
+  createWindowGridPBR,
+  disposePBRSet,
+  type PBRTextureSet,
+} from './pbrTextures';
 
 interface CeresWorldMeshProps {
   graph: RoadNetworkGraph;
@@ -189,9 +198,13 @@ function CeresGateGantry({
 function CeresTerminalShed({
   building,
   isCad,
+  concretePbr,
+  roofPbr,
 }: {
   building: BuildingFootprint;
   isCad: boolean;
+  concretePbr: PBRTextureSet | null;
+  roofPbr: PBRTextureSet | null;
 }) {
   const { width, depth, height } = building;
   const colCount = 6;
@@ -217,7 +230,13 @@ function CeresTerminalShed({
       {/* Raised concrete passenger boarding platform */}
       <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
         <boxGeometry args={[depth - 0.6, 0.36, width - 0.4]} />
-        <meshStandardMaterial color={platformColor} roughness={0.85} />
+        <meshStandardMaterial
+          map={!isCad ? concretePbr?.map : undefined}
+          bumpMap={!isCad ? concretePbr?.bumpMap : undefined}
+          bumpScale={0.03}
+          color={platformColor}
+          roughness={0.84}
+        />
       </mesh>
 
       {/* Yellow platform safety edge stripes on both bus-boarding sides */}
@@ -275,7 +294,14 @@ function CeresTerminalShed({
         receiveShadow
       >
         <boxGeometry args={[depth * 0.58, 0.22, width + 1.4]} />
-        <meshStandardMaterial color={roofColor} roughness={0.55} metalness={0.22} />
+        <meshStandardMaterial
+          map={!isCad ? roofPbr?.map : undefined}
+          bumpMap={!isCad ? roofPbr?.bumpMap : undefined}
+          bumpScale={0.08}
+          color={roofColor}
+          roughness={0.44}
+          metalness={0.34}
+        />
       </mesh>
       <mesh
         position={[-depth * 0.27, height * 0.91, 0]}
@@ -284,7 +310,14 @@ function CeresTerminalShed({
         receiveShadow
       >
         <boxGeometry args={[depth * 0.58, 0.22, width + 1.4]} />
-        <meshStandardMaterial color={roofColor} roughness={0.55} metalness={0.22} />
+        <meshStandardMaterial
+          map={!isCad ? roofPbr?.map : undefined}
+          bumpMap={!isCad ? roofPbr?.bumpMap : undefined}
+          bumpScale={0.08}
+          color={roofColor}
+          roughness={0.44}
+          metalness={0.34}
+        />
       </mesh>
       {/* Ridge ventilator monitor along canopy crest */}
       <mesh position={[0, height + 0.16, 0]} castShadow>
@@ -312,9 +345,17 @@ function CeresTerminalShed({
 function StylizedBuilding({
   building,
   isCad,
+  facadePbr,
+  roofPbr,
+  windowPbr,
+  concretePbr,
 }: {
   building: BuildingFootprint;
   isCad: boolean;
+  facadePbr: PBRTextureSet | null;
+  roofPbr: PBRTextureSet | null;
+  windowPbr: PBRTextureSet | null;
+  concretePbr: PBRTextureSet | null;
 }) {
   const { width, depth, height, roofStyle, side } = building;
   const frontDir = side === 'SW' ? 1 : -1;
@@ -324,7 +365,7 @@ function StylizedBuilding({
   const wallColor = isCad ? '#16253b' : building.facadeColor;
   const roofColor = isCad ? '#223a57' : building.roofColor;
   const accentColor = isCad ? '#38bdf8' : building.accentColor ?? building.roofColor;
-  const windowColor = isCad ? '#0c192b' : '#26384d';
+  const windowColor = isCad ? '#0c192b' : '#ffffff';
 
   // Extruded triangular gable roof geometry built once per gable building
   const gableGeo = useMemo(() => {
@@ -359,13 +400,26 @@ function StylizedBuilding({
       {/* Main architectural facade volume */}
       <mesh position={[0, height * 0.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[depth, height, width]} />
-        <meshStandardMaterial color={wallColor} roughness={0.82} metalness={0.04} />
+        <meshStandardMaterial
+          map={!isCad ? facadePbr?.map : undefined}
+          bumpMap={!isCad ? facadePbr?.bumpMap : undefined}
+          bumpScale={0.045}
+          color={wallColor}
+          roughness={0.82}
+          metalness={0.04}
+        />
       </mesh>
 
       {/* Subtle architectural plinth/base trim */}
       <mesh position={[0, 0.25, 0]} receiveShadow>
         <boxGeometry args={[depth + 0.22, 0.5, width + 0.22]} />
-        <meshStandardMaterial color={isCad ? '#1f3552' : '#94a3b8'} roughness={0.9} />
+        <meshStandardMaterial
+          map={!isCad ? concretePbr?.map : undefined}
+          bumpMap={!isCad ? concretePbr?.bumpMap : undefined}
+          bumpScale={0.025}
+          color={isCad ? '#1f3552' : '#94a3b8'}
+          roughness={0.88}
+        />
       </mesh>
 
       {/* Floor window bands along road-facing facade */}
@@ -376,11 +430,15 @@ function StylizedBuilding({
           <mesh key={fl} position={[frontX + frontDir * 0.05, wy, 0]}>
             <boxGeometry args={[0.08, fl === 0 ? 1.45 : 1.05, width * 0.82]} />
             <meshStandardMaterial
+              map={!isCad ? windowPbr?.map : undefined}
+              bumpMap={!isCad ? windowPbr?.bumpMap : undefined}
+              bumpScale={0.03}
               color={windowColor}
-              roughness={0.2}
-              metalness={0.45}
-              emissive={isCad ? '#0ea5e9' : '#1e293b'}
-              emissiveIntensity={isCad ? 0.35 : 0.08}
+              roughness={0.14}
+              metalness={0.58}
+              envMapIntensity={1.4}
+              emissive={isCad ? '#0ea5e9' : '#0f172a'}
+              emissiveIntensity={isCad ? 0.35 : 0.06}
             />
           </mesh>
         );
@@ -395,12 +453,19 @@ function StylizedBuilding({
             castShadow
           >
             <boxGeometry args={[1.55, 0.16, width * 0.88]} />
-            <meshStandardMaterial color={accentColor} roughness={0.55} />
+            <meshStandardMaterial
+              map={!isCad ? roofPbr?.map : undefined}
+              bumpMap={!isCad ? roofPbr?.bumpMap : undefined}
+              bumpScale={0.04}
+              color={accentColor}
+              roughness={0.48}
+              metalness={0.22}
+            />
           </mesh>
           {/* Upper signage fascia band */}
           <mesh position={[frontX + frontDir * 0.09, height - 0.55, 0]}>
             <boxGeometry args={[0.14, 0.62, width * 0.92]} />
-            <meshStandardMaterial color={accentColor} roughness={0.5} />
+            <meshStandardMaterial color={accentColor} roughness={0.46} />
           </mesh>
         </>
       )}
@@ -408,7 +473,14 @@ function StylizedBuilding({
       {/* Roof massing per roofStyle */}
       {roofStyle === 'gable' && gableGeo && (
         <mesh geometry={gableGeo} position={[0, height, 0]} castShadow receiveShadow>
-          <meshStandardMaterial color={roofColor} roughness={0.68} metalness={0.14} />
+          <meshStandardMaterial
+            map={!isCad ? roofPbr?.map : undefined}
+            bumpMap={!isCad ? roofPbr?.bumpMap : undefined}
+            bumpScale={0.07}
+            color={roofColor}
+            roughness={0.52}
+            metalness={0.28}
+          />
         </mesh>
       )}
 
@@ -421,7 +493,14 @@ function StylizedBuilding({
           receiveShadow
         >
           <cylinderGeometry args={[0.28, 1.0, 2.3, 4]} />
-          <meshStandardMaterial color={roofColor} roughness={0.68} metalness={0.14} />
+          <meshStandardMaterial
+            map={!isCad ? roofPbr?.map : undefined}
+            bumpMap={!isCad ? roofPbr?.bumpMap : undefined}
+            bumpScale={0.06}
+            color={roofColor}
+            roughness={0.52}
+            metalness={0.26}
+          />
         </mesh>
       )}
 
@@ -905,15 +984,56 @@ function WorldAtmosphere({ groundMode }: { groundMode: GroundMode }) {
     );
   }
 
+  const daylightEnv = (
+    <Environment resolution={128} frames={1}>
+      {/* Upper sky dome bounce */}
+      <Lightformer
+        form="rect"
+        intensity={1.7}
+        color="#dbeafe"
+        position={[0, 40, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        scale={[120, 120, 1]}
+      />
+      {/* Warm solar highlight key */}
+      <Lightformer
+        form="circle"
+        intensity={3.6}
+        color="#fff6e3"
+        position={[45, 35, 30]}
+        scale={22}
+      />
+      {/* Cool horizon fill */}
+      <Lightformer
+        form="rect"
+        intensity={0.95}
+        color="#bae6fd"
+        position={[-40, 12, -30]}
+        rotation={[0, Math.PI / 4, 0]}
+        scale={[80, 24, 1]}
+      />
+      {/* Warm earth/asphalt ground bounce */}
+      <Lightformer
+        form="rect"
+        intensity={0.55}
+        color="#6b7265"
+        position={[0, -20, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        scale={[100, 100, 1]}
+      />
+    </Environment>
+  );
+
   if (groundMode === 'satellite') {
     return (
       <>
         <color attach="background" args={['#d8e7f3']} />
         <fog attach="fog" args={['#d8e7f3', 360, 950]} />
-        <hemisphereLight args={['#f0f7ff', '#7a8a78', 1.15]} />
+        {daylightEnv}
+        <hemisphereLight args={['#f0f7ff', '#7a8a78', 1.05]} />
         <directionalLight
           position={[115, 165, 85]}
-          intensity={1.65}
+          intensity={1.85}
           color="#fffaf0"
           castShadow
           shadow-mapSize={[2048, 2048]}
@@ -930,16 +1050,17 @@ function WorldAtmosphere({ groundMode }: { groundMode: GroundMode }) {
     );
   }
 
-  // 'game': crisp Cities: Skylines warm daylight
+  // 'game': crisp daylight with realistic IBL reflections
   return (
     <>
-      <color attach="background" args={['#b5daf2']} />
-      <fog attach="fog" args={['#c9e3f2', 200, 640]} />
-      <hemisphereLight args={['#e6f4ff', '#4b6844', 0.95]} />
+      <color attach="background" args={['#b8dcf2']} />
+      <fog attach="fog" args={['#cce4f2', 220, 680]} />
+      {daylightEnv}
+      <hemisphereLight args={['#e6f4ff', '#4b6844', 0.85]} />
       <directionalLight
-        position={[115, 145, 88]}
-        intensity={2.15}
-        color="#fff4e0"
+        position={[125, 138, 92]}
+        intensity={2.25}
+        color="#fff3dc"
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-170}
@@ -951,7 +1072,7 @@ function WorldAtmosphere({ groundMode }: { groundMode: GroundMode }) {
         shadow-bias={-0.0004}
         shadow-normalBias={0.04}
       />
-      <directionalLight position={[-110, 80, -90]} intensity={0.48} color="#bfdbfe" />
+      <directionalLight position={[-110, 80, -90]} intensity={0.42} color="#bfdbfe" />
     </>
   );
 }
@@ -970,17 +1091,28 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
   const isSatellite = groundMode === 'satellite';
   const isCad = groundMode === 'cad';
 
-  // Procedural textures (created once, disposed cleanly)
+  // Procedural PBR texture sets (created once, disposed cleanly)
   const textures = useMemo(() => {
-    const asphalt = createAsphaltTexture();
-    const terrain = createTerrainTexture();
-    return { asphalt, terrain };
+    return {
+      asphalt: createAsphaltPBR(),
+      terrain: createNaturalTerrainPBR(),
+      concrete: createConcretePBR(0.65, 0.65),
+      concreteYard: createConcretePBR(0.08, 0.08),
+      roof: createCorrugatedRoofPBR(),
+      facade: createFacadePBR(),
+      windowGrid: createWindowGridPBR(),
+    };
   }, []);
 
   useEffect(() => {
     return () => {
-      textures.asphalt?.dispose();
-      textures.terrain?.dispose();
+      disposePBRSet(textures.asphalt);
+      disposePBRSet(textures.terrain);
+      disposePBRSet(textures.concrete);
+      disposePBRSet(textures.concreteYard);
+      disposePBRSet(textures.roof);
+      disposePBRSet(textures.facade);
+      disposePBRSet(textures.windowGrid);
     };
   }, [textures]);
 
@@ -1138,9 +1270,11 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
         <mesh position={[20, -0.08, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[1400, 1400]} />
           <meshStandardMaterial
-            map={textures.terrain ?? undefined}
+            map={textures.terrain?.map ?? undefined}
+            bumpMap={textures.terrain?.bumpMap ?? undefined}
+            bumpScale={0.08}
             color={textures.terrain ? '#ffffff' : '#58784b'}
-            roughness={0.96}
+            roughness={0.94}
             metalness={0.0}
           />
         </mesh>
@@ -1173,8 +1307,11 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
       {/* 2. CERES CONCRETE YARD PAD */}
       <mesh geometry={geometries.yardPadGeo} receiveShadow>
         <meshStandardMaterial
-          color={isCad ? '#142033' : '#b7bec6'}
-          roughness={0.88}
+          map={!isCad ? textures.concreteYard?.map : undefined}
+          bumpMap={!isCad ? textures.concreteYard?.bumpMap : undefined}
+          bumpScale={0.04}
+          color={isCad ? '#142033' : '#d2d7de'}
+          roughness={0.86}
           transparent={isSatellite}
           opacity={isSatellite ? 0.62 : 1.0}
         />
@@ -1183,10 +1320,14 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
       {/* 3. PROCEDURAL ASPHALT CARRIAGEWAYS */}
       <mesh geometry={geometries.arterialAsphaltGeo} receiveShadow>
         <meshStandardMaterial
-          map={isCad ? undefined : textures.asphalt ?? undefined}
-          color={isCad ? '#1a293f' : '#4a525e'}
-          roughness={0.86}
-          metalness={0.02}
+          map={!isCad ? textures.asphalt?.map : undefined}
+          bumpMap={!isCad ? textures.asphalt?.bumpMap : undefined}
+          bumpScale={0.055}
+          roughnessMap={!isCad ? textures.asphalt?.roughnessMap : undefined}
+          color={isCad ? '#1a293f' : '#d8dee6'}
+          roughness={0.88}
+          metalness={0.03}
+          envMapIntensity={0.65}
           transparent={isSatellite}
           opacity={roadOpacity}
           depthWrite={!isSatellite}
@@ -1194,10 +1335,14 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
       </mesh>
       <mesh geometry={geometries.sideRoadAsphaltGeo} receiveShadow>
         <meshStandardMaterial
-          map={isCad ? undefined : textures.asphalt ?? undefined}
-          color={isCad ? '#162336' : '#535b67'}
-          roughness={0.88}
+          map={!isCad ? textures.asphalt?.map : undefined}
+          bumpMap={!isCad ? textures.asphalt?.bumpMap : undefined}
+          bumpScale={0.05}
+          roughnessMap={!isCad ? textures.asphalt?.roughnessMap : undefined}
+          color={isCad ? '#162336' : '#e2e8f0'}
+          roughness={0.9}
           metalness={0.02}
+          envMapIntensity={0.55}
           transparent={isSatellite}
           opacity={roadOpacity}
           depthWrite={!isSatellite}
@@ -1207,14 +1352,23 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
       {/* 4. RAISED CONCRETE SIDEWALKS & SEGMENTED CENTER MEDIANS (ZERO CUTOUT BLOCKING!) */}
       <mesh geometry={geometries.sidewalksGeo} castShadow receiveShadow>
         <meshStandardMaterial
-          color={isCad ? '#223650' : '#cfd5dc'}
-          roughness={0.85}
+          map={!isCad ? textures.concrete?.map : undefined}
+          bumpMap={!isCad ? textures.concrete?.bumpMap : undefined}
+          bumpScale={0.035}
+          color={isCad ? '#223650' : '#dde2e8'}
+          roughness={0.84}
           transparent={isSatellite}
           opacity={isSatellite ? 0.8 : 1.0}
         />
       </mesh>
       <mesh geometry={geometries.mediansGeo} castShadow receiveShadow>
-        <meshStandardMaterial color={isCad ? '#2a4566' : '#d8dee4'} roughness={0.78} />
+        <meshStandardMaterial
+          map={!isCad ? textures.concrete?.map : undefined}
+          bumpMap={!isCad ? textures.concrete?.bumpMap : undefined}
+          bumpScale={0.03}
+          color={isCad ? '#2a4566' : '#e2e7ec'}
+          roughness={0.78}
+        />
       </mesh>
       <mesh geometry={geometries.medianNoseGeo} castShadow receiveShadow>
         <meshStandardMaterial color="#f5b800" roughness={0.62} />
@@ -1296,9 +1450,23 @@ export function CeresWorldMesh({ graph }: CeresWorldMeshProps) {
       <group name="kabankalan-buildings">
         {graph.buildings.map((b) =>
           b.id === 'ceres_terminal_shed' ? (
-            <CeresTerminalShed key={b.id} building={b} isCad={isCad} />
+            <CeresTerminalShed
+              key={b.id}
+              building={b}
+              isCad={isCad}
+              concretePbr={textures.concreteYard}
+              roofPbr={textures.roof}
+            />
           ) : (
-            <StylizedBuilding key={b.id} building={b} isCad={isCad} />
+            <StylizedBuilding
+              key={b.id}
+              building={b}
+              isCad={isCad}
+              facadePbr={textures.facade}
+              roofPbr={textures.roof}
+              windowPbr={textures.windowGrid}
+              concretePbr={textures.concrete}
+            />
           ),
         )}
       </group>

@@ -196,6 +196,8 @@ export function GameSimulationCanvas() {
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.04,
         }}
         onPointerMissed={() => selectVehicle(null)}
       >

@@ -1,13 +1,13 @@
 {
-  "name": "kabankalan-dss",
-  "version": "0.1.0",
+  "name": "kabankalan-dss-v2",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/simulation/__tests__/simulation.test.ts"
+    "test": "node --import tsx --test src/sim/__tests__/*.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

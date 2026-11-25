@@ -1,0 +1,1667 @@
+{
+  "type": "FeatureCollection",
+  "name": "kabankalan_ceres_corridor_v2",
+  "metadata": {
+    "origin": {
+      "lat": 9.99786,
+      "lng": 122.81195
+    },
+    "bearingDeg": 139.7,
+    "source": "OpenStreetMap way/839126804,180539716,180539689,180539677,519187986 calibrated against ESRI World Imagery z=18"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "national_rd",
+        "name": "National Road (Justice Y. Perez Ave / Negros South Rd)",
+        "roadClass": "arterial",
+        "carriagewayWidth": 14,
+        "medianWidth": 0.6,
+        "lengthMeters": 350
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8111597,
+            9.9991515
+          ],
+          [
+            122.8117586,
+            9.9984505
+          ],
+          [
+            122.8121324,
+            9.9980131
+          ],
+          [
+            122.8130254,
+            9.9969679
+          ],
+          [
+            122.8132229,
+            9.9967368
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "pedro_zayco_st",
+        "name": "Pedro Zayco Sr. Street",
+        "roadClass": "collector",
+        "carriagewayWidth": 6.4,
+        "medianWidth": 0,
+        "lengthMeters": 142.82
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8118004,
+            9.9984856
+          ],
+          [
+            122.8119326,
+            9.9985966
+          ],
+          [
+            122.8121414,
+            9.9987719
+          ],
+          [
+            122.8123294,
+            9.9989296
+          ],
+          [
+            122.8124596,
+            9.9990011
+          ],
+          [
+            122.8126059,
+            9.9990256
+          ],
+          [
+            122.8127597,
+            9.9990065
+          ],
+          [
+            122.8129073,
+            9.9989527
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "repollo_st",
+        "name": "Repollo Street",
+        "roadClass": "local",
+        "carriagewayWidth": 6,
+        "medianWidth": 0,
+        "lengthMeters": 118.19
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8130383,
+            9.9970372
+          ],
+          [
+            122.8130718,
+            9.9972168
+          ],
+          [
+            122.8131248,
+            9.9975013
+          ],
+          [
+            122.8131827,
+            9.9978124
+          ],
+          [
+            122.813234,
+            9.998088
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "ceres_perimeter_rd",
+        "name": "Ceres Terminal Perimeter Access Road",
+        "roadClass": "perimeter",
+        "carriagewayWidth": 6,
+        "medianWidth": 0,
+        "lengthMeters": 217.05
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8119338,
+            9.9981616
+          ],
+          [
+            122.811732,
+            9.9979921
+          ],
+          [
+            122.8114744,
+            9.9977759
+          ],
+          [
+            122.811297,
+            9.9976198
+          ],
+          [
+            122.8112122,
+            9.9974953
+          ],
+          [
+            122.8111871,
+            9.9973498
+          ],
+          [
+            122.811249,
+            9.9972004
+          ],
+          [
+            122.8113856,
+            9.9970545
+          ],
+          [
+            122.8115758,
+            9.9969298
+          ],
+          [
+            122.8118169,
+            9.9968715
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "ceres_gate1_driveway",
+        "name": "Ceres Terminal Gate 1 (SE Ingress)",
+        "roadClass": "driveway",
+        "carriagewayWidth": 8.6,
+        "medianWidth": 0,
+        "lengthMeters": 24
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8122792,
+            9.9977573
+          ],
+          [
+            122.8121122,
+            9.997617
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "road",
+        "id": "ceres_gate2_driveway",
+        "name": "Ceres Terminal Gate 2 (NW Egress)",
+        "roadClass": "driveway",
+        "carriagewayWidth": 8.6,
+        "medianWidth": 0,
+        "lengthMeters": 24
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8118558,
+            9.9979171
+          ],
+          [
+            122.8120228,
+            9.9980574
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_plaza_nw",
+        "label": "Kabankalan Commercial Plaza",
+        "category": "commercial",
+        "side": "SW",
+        "height": 7.2,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8111101,
+              9.9987899
+            ],
+            [
+              122.8113105,
+              9.9985553
+            ],
+            [
+              122.8114358,
+              9.9986605
+            ],
+            [
+              122.8112354,
+              9.9988951
+            ],
+            [
+              122.8111101,
+              9.9987899
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_arcade_nw",
+        "label": "Hardware & Supply Row",
+        "category": "commercial",
+        "side": "SW",
+        "height": 6.4,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8113528,
+              9.9985198
+            ],
+            [
+              122.8115297,
+              9.9983128
+            ],
+            [
+              122.811648,
+              9.9984121
+            ],
+            [
+              122.8114712,
+              9.9986191
+            ],
+            [
+              122.8113528,
+              9.9985198
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_corner_perim",
+        "label": "Perimeter Corner Arcade",
+        "category": "commercial",
+        "side": "SW",
+        "height": 6.8,
+        "roofStyle": "flat",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.811572,
+              9.9982772
+            ],
+            [
+              122.8117312,
+              9.998091
+            ],
+            [
+              122.8118425,
+              9.9981844
+            ],
+            [
+              122.8116834,
+              9.9983707
+            ],
+            [
+              122.811572,
+              9.9982772
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "city_health_office",
+        "label": "Kabankalan City Health Office",
+        "category": "civic",
+        "side": "SW",
+        "height": 7.8,
+        "roofStyle": "hip",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8109883,
+              9.9979531
+            ],
+            [
+              122.8111888,
+              9.9977185
+            ],
+            [
+              122.8114115,
+              9.9979055
+            ],
+            [
+              122.8112111,
+              9.9981401
+            ],
+            [
+              122.8109883,
+              9.9979531
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ceres_terminal_shed",
+        "label": "Ceres Bus Terminal Shed",
+        "category": "terminal_shed",
+        "side": "SW",
+        "height": 6.2,
+        "roofStyle": "shed_canopy",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8119083,
+              9.9978487
+            ],
+            [
+              122.8120498,
+              9.9976831
+            ],
+            [
+              122.8121263,
+              9.9977474
+            ],
+            [
+              122.8119848,
+              9.9979129
+            ],
+            [
+              122.8119083,
+              9.9978487
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ceres_admin_ticketing",
+        "label": "Ceres Admin & Ticketing",
+        "category": "terminal_admin",
+        "side": "SW",
+        "height": 5.4,
+        "roofStyle": "gable",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8114012,
+              9.9976658
+            ],
+            [
+              122.8114424,
+              9.9976175
+            ],
+            [
+              122.8116512,
+              9.9977928
+            ],
+            [
+              122.81161,
+              9.9978411
+            ],
+            [
+              122.8114012,
+              9.9976658
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "duremdes_suites",
+        "label": "Duremdes Suites Hotel",
+        "category": "hotel",
+        "side": "SW",
+        "height": 11.5,
+        "roofStyle": "flat",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8121529,
+              9.9974854
+            ],
+            [
+              122.8122944,
+              9.9973198
+            ],
+            [
+              122.8124475,
+              9.9974483
+            ],
+            [
+              122.8123061,
+              9.9976139
+            ],
+            [
+              122.8121529,
+              9.9974854
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_commercial_se_1",
+        "label": "South Corridor Commercial Row",
+        "category": "commercial",
+        "side": "SW",
+        "height": 6.6,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8123716,
+              9.9973135
+            ],
+            [
+              122.8125484,
+              9.9971065
+            ],
+            [
+              122.8126702,
+              9.9972087
+            ],
+            [
+              122.8124934,
+              9.9974157
+            ],
+            [
+              122.8123716,
+              9.9973135
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_commercial_se_2",
+        "label": "South Terminal Annex Shops",
+        "category": "commercial",
+        "side": "SW",
+        "height": 6.2,
+        "roofStyle": "flat",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8125768,
+              9.9970593
+            ],
+            [
+              122.8127301,
+              9.9968799
+            ],
+            [
+              122.8128588,
+              9.996988
+            ],
+            [
+              122.8127056,
+              9.9971673
+            ],
+            [
+              122.8125768,
+              9.9970593
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "sw_chapel_se",
+        "label": "Community Worship Hall",
+        "category": "civic",
+        "side": "SW",
+        "height": 7.6,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8127757,
+              9.9967286
+            ],
+            [
+              122.8129171,
+              9.996563
+            ],
+            [
+              122.8130703,
+              9.9966915
+            ],
+            [
+              122.8129288,
+              9.9968571
+            ],
+            [
+              122.8127757,
+              9.9967286
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ne_annex_nw",
+        "label": "North Commercial Annex",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.4,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8113788,
+              9.9990629
+            ],
+            [
+              122.811591,
+              9.9988145
+            ],
+            [
+              122.8116989,
+              9.9989051
+            ],
+            [
+              122.8114867,
+              9.9991535
+            ],
+            [
+              122.8113788,
+              9.9990629
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "bascon_cakes",
+        "label": "Bascon Cakes",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.8,
+        "roofStyle": "flat",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8116347,
+              9.9987564
+            ],
+            [
+              122.8117762,
+              9.9985908
+            ],
+            [
+              122.8118736,
+              9.9986726
+            ],
+            [
+              122.8117322,
+              9.9988382
+            ],
+            [
+              122.8116347,
+              9.9987564
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "noceco_sub_office",
+        "label": "Noceco Sub-Office",
+        "category": "civic",
+        "side": "NE",
+        "height": 7.4,
+        "roofStyle": "hip",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8119,
+              9.9984459
+            ],
+            [
+              122.8119943,
+              9.9983356
+            ],
+            [
+              122.8120952,
+              9.9984203
+            ],
+            [
+              122.8120009,
+              9.9985307
+            ],
+            [
+              122.8119,
+              9.9984459
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "cebuana_lhuillier",
+        "label": "Cebuana Lhuillier",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.5,
+        "roofStyle": "flat",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.812012,
+              9.9983149
+            ],
+            [
+              122.8120945,
+              9.9982183
+            ],
+            [
+              122.812178,
+              9.9982884
+            ],
+            [
+              122.8120955,
+              9.998385
+            ],
+            [
+              122.812012,
+              9.9983149
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "simonnes_pharmacy",
+        "label": "Simonne's Pharmacy",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.8,
+        "roofStyle": "flat",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8121181,
+              9.9981907
+            ],
+            [
+              122.8122242,
+              9.9980665
+            ],
+            [
+              122.8123112,
+              9.9981395
+            ],
+            [
+              122.8122051,
+              9.9982637
+            ],
+            [
+              122.8121181,
+              9.9981907
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ms_glass_aluminum",
+        "label": "MS Glass Aluminum Supply",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.2,
+        "roofStyle": "gable",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8122478,
+              9.9980389
+            ],
+            [
+              122.8123774,
+              9.9978871
+            ],
+            [
+              122.8124749,
+              9.9979689
+            ],
+            [
+              122.8123452,
+              9.9981207
+            ],
+            [
+              122.8122478,
+              9.9980389
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "kz_motorparts",
+        "label": "KZ Motorparts",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.4,
+        "roofStyle": "gable",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.812401,
+              9.9978595
+            ],
+            [
+              122.8125189,
+              9.9977215
+            ],
+            [
+              122.8126094,
+              9.9977975
+            ],
+            [
+              122.8124915,
+              9.9979355
+            ],
+            [
+              122.812401,
+              9.9978595
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "modern_glass",
+        "label": "Modern Glass",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.6,
+        "roofStyle": "flat",
+        "landmark": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8125425,
+              9.9976939
+            ],
+            [
+              122.812684,
+              9.9975284
+            ],
+            [
+              122.8127814,
+              9.9976102
+            ],
+            [
+              122.8126399,
+              9.9977757
+            ],
+            [
+              122.8125425,
+              9.9976939
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ne_strip_se_1",
+        "label": "Commercial Shophouses SE",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.2,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8127076,
+              9.9975008
+            ],
+            [
+              122.812849,
+              9.9973352
+            ],
+            [
+              122.8129395,
+              9.9974111
+            ],
+            [
+              122.812798,
+              9.9975767
+            ],
+            [
+              122.8127076,
+              9.9975008
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ne_strip_se_2",
+        "label": "Repollo Corner Commercial",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.4,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8128726,
+              9.9973076
+            ],
+            [
+              122.8129492,
+              9.9972179
+            ],
+            [
+              122.8130188,
+              9.9972763
+            ],
+            [
+              122.8129422,
+              9.997366
+            ],
+            [
+              122.8128726,
+              9.9973076
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "ne_corner_repollo_se",
+        "label": "Repollo East Commercial",
+        "category": "commercial",
+        "side": "NE",
+        "height": 6.8,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8131791,
+              9.9969488
+            ],
+            [
+              122.8132852,
+              9.9968246
+            ],
+            [
+              122.8133862,
+              9.9969094
+            ],
+            [
+              122.8132801,
+              9.9970335
+            ],
+            [
+              122.8131791,
+              9.9969488
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_nw_1",
+        "label": "Pedro Zayco Residence NW-1",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.2,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.811876,
+              9.9988168
+            ],
+            [
+              122.8119644,
+              9.9987133
+            ],
+            [
+              122.8120757,
+              9.9988068
+            ],
+            [
+              122.8119873,
+              9.9989103
+            ],
+            [
+              122.811876,
+              9.9988168
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_nw_2",
+        "label": "Pedro Zayco Residence NW-2",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.6,
+        "roofStyle": "hip",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8120291,
+              9.9989453
+            ],
+            [
+              122.8121175,
+              9.9988418
+            ],
+            [
+              122.8122289,
+              9.9989353
+            ],
+            [
+              122.8121405,
+              9.9990388
+            ],
+            [
+              122.8120291,
+              9.9989453
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_nw_3",
+        "label": "Pedro Zayco Residence NW-3",
+        "category": "residential",
+        "side": "NE",
+        "height": 5,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8122079,
+              9.9990718
+            ],
+            [
+              122.8122904,
+              9.9989752
+            ],
+            [
+              122.8123879,
+              9.999057
+            ],
+            [
+              122.8123054,
+              9.9991536
+            ],
+            [
+              122.8122079,
+              9.9990718
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_se_1",
+        "label": "Pedro Zayco Commercial SE-1",
+        "category": "commercial",
+        "side": "NE",
+        "height": 5.8,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8120646,
+              9.998596
+            ],
+            [
+              122.812153,
+              9.9984925
+            ],
+            [
+              122.8122644,
+              9.998586
+            ],
+            [
+              122.812176,
+              9.9986895
+            ],
+            [
+              122.8120646,
+              9.998596
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_se_2",
+        "label": "Pedro Zayco Residence SE-2",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.2,
+        "roofStyle": "hip",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8122177,
+              9.9987246
+            ],
+            [
+              122.8123061,
+              9.9986211
+            ],
+            [
+              122.8124175,
+              9.9987146
+            ],
+            [
+              122.8123291,
+              9.998818
+            ],
+            [
+              122.8122177,
+              9.9987246
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "pz_res_se_3",
+        "label": "Pedro Zayco Residence SE-3",
+        "category": "residential",
+        "side": "NE",
+        "height": 5,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8123826,
+              9.9988393
+            ],
+            [
+              122.8124652,
+              9.9987427
+            ],
+            [
+              122.8125626,
+              9.9988245
+            ],
+            [
+              122.8124801,
+              9.9989211
+            ],
+            [
+              122.8123826,
+              9.9988393
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "rep_res_w_1",
+        "label": "Repollo Residence W-1",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.2,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.81301,
+              9.9972833
+            ],
+            [
+              122.8130364,
+              9.9974255
+            ],
+            [
+              122.8129378,
+              9.9974435
+            ],
+            [
+              122.8129113,
+              9.9973013
+            ],
+            [
+              122.81301,
+              9.9972833
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "rep_res_w_2",
+        "label": "Repollo Residence W-2",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.4,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8130663,
+              9.9975855
+            ],
+            [
+              122.8130927,
+              9.9977277
+            ],
+            [
+              122.8129941,
+              9.9977458
+            ],
+            [
+              122.8129676,
+              9.9976036
+            ],
+            [
+              122.8130663,
+              9.9975855
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "rep_res_e_1",
+        "label": "Repollo Residence E-1",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.4,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8132422,
+              9.9971856
+            ],
+            [
+              122.8132687,
+              9.9973278
+            ],
+            [
+              122.81317,
+              9.9973459
+            ],
+            [
+              122.8131435,
+              9.9972037
+            ],
+            [
+              122.8132422,
+              9.9971856
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "rep_res_e_2",
+        "label": "Repollo Residence E-2",
+        "category": "residential",
+        "side": "NE",
+        "height": 5.8,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.813298,
+              9.9974604
+            ],
+            [
+              122.8133278,
+              9.9976204
+            ],
+            [
+              122.8132202,
+              9.9976401
+            ],
+            [
+              122.8131904,
+              9.9974801
+            ],
+            [
+              122.813298,
+              9.9974604
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "building",
+        "id": "rep_res_e_3",
+        "label": "Repollo Residence E-3",
+        "category": "residential",
+        "side": "NE",
+        "height": 5,
+        "roofStyle": "gable",
+        "landmark": false
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8133481,
+              9.9977545
+            ],
+            [
+              122.8133746,
+              9.9978968
+            ],
+            [
+              122.813276,
+              9.9979148
+            ],
+            [
+              122.8132495,
+              9.9977726
+            ],
+            [
+              122.8133481,
+              9.9977545
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "yard_pad",
+        "id": "ceres_main_yard",
+        "label": "Ceres Bus Terminal Concrete Yard & Forecourt",
+        "surface": "concrete"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              122.8119401,
+              9.9980982
+            ],
+            [
+              122.8123044,
+              9.9976718
+            ],
+            [
+              122.8117198,
+              9.997181
+            ],
+            [
+              122.8113956,
+              9.9975604
+            ],
+            [
+              122.8116269,
+              9.9978352
+            ],
+            [
+              122.8119401,
+              9.9980982
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "crosswalk",
+        "id": "cw_pedro_zayco",
+        "label": "Pedro Zayco / Noceco Pedestrian Crossing",
+        "width": 3.4,
+        "signalizedInScenario2": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8118095,
+            9.998293
+          ],
+          [
+            122.811907,
+            9.9983748
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "crosswalk",
+        "id": "cw_ceres_frontage",
+        "label": "Ceres Bus Terminal Main Crosswalk",
+        "width": 3.6,
+        "signalizedInScenario2": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8121426,
+            9.9979032
+          ],
+          [
+            122.81224,
+            9.997985
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "crosswalk",
+        "id": "cw_repollo",
+        "label": "Repollo St. / Modern Glass Crosswalk",
+        "width": 3.4,
+        "signalizedInScenario2": false
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            122.8128676,
+            9.9970546
+          ],
+          [
+            122.812965,
+            9.9971364
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "gate",
+        "id": "gate_1_ingress",
+        "label": "Gate 1 — Bus Entrance",
+        "clearSpanWidth": 10.6,
+        "clearHeight": 5.2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          122.812227,
+          9.9977134
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "layer": "gate",
+        "id": "gate_2_egress",
+        "label": "Gate 2 — Bus Exit",
+        "clearSpanWidth": 10.6,
+        "clearHeight": 5.2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          122.8119706,
+          9.9980136
+        ]
+      }
+    }
+  ]
+}
